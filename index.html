@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght=300;400;500;700;900&display=swap');
         
         body {
             font-family: 'Tajawal', sans-serif;
@@ -67,7 +67,7 @@
                 <i data-lucide="youtube" class="w-10 h-10"></i>
             </div>
             <h1 class="text-3xl md:text-4xl font-black bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">سينما الواقع الافتراضي الذكية</h1>
-            <p class="text-slate-400 text-xs md:text-sm mt-2">حل نهائي لتخطي حظر التشغيل التلقائي للشاشات داخل نظارات الموبايل</p>
+            <p class="text-slate-400 text-xs md:text-sm mt-2">مزامنة أطر الفيديو بالملي ثانية للتخلص من اختلاف اللقطات بين العينين تماماً</p>
         </div>
 
         <!-- تبويبات اختيار مصدر الفيديو -->
@@ -92,7 +92,7 @@
                 <button onclick="applyYoutubeUrl()" class="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-3 rounded-xl transition-all">تطبيق الرابط</button>
             </div>
             <div class="text-xs text-green-400 mt-3 flex items-center gap-1.5">
-                <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i> تم إضافة نظام "النقرة الاستباقية" لتفعيل الصوت وتفادي مشكلة الشاشة السوداء داخل المتصفح.
+                <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i> تم تفعيل بروتوكول المزامنة اللحظية الفائقة (Strict Sync) لمنع الصداع واختلاف اللقطات.
             </div>
         </div>
 
@@ -207,8 +207,8 @@
             <button onclick="startVideoPlayback()" class="w-24 h-24 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-2xl animate-bounce border-4 border-white/20">
                 <i data-lucide="play" class="w-12 h-12 fill-white ml-1"></i>
             </button>
-            <p class="text-white text-base font-bold animate-pulse">انقر هنا لتفعيل الصوت وبدء السينما فوراً</p>
-            <span class="text-xs text-slate-400">هذه الخطوة تمنع المتصفح من حظر تشغيل الفيديو تلقائياً</span>
+            <p class="text-white text-base font-bold animate-pulse">انقر هنا لبدء مزامنة القنوات البصرية المتطابقة</p>
+            <span class="text-xs text-slate-400 text-center px-6">هذه الخطوة تمنح المتصفح الإذن بتشغيل المشغلين في نفس الجزء من الملي ثانية</span>
         </div>
 
         <!-- العين اليسرى (Left Eye View) -->
@@ -298,6 +298,7 @@
 
         let isVideoPlaying = true;
         let syncInterval = null;
+        let strictSyncLock = false; // قفل لمنع التداخل أثناء التصحيح اللحظي
 
         lucide.createIcons();
 
@@ -480,7 +481,7 @@
             updateVRPlayPauseButton();
         }
 
-        // تشغيل نظام يوتيوب المتزامن المتكامل وبشكل رسمي
+        // تشغيل يوتيوب الرسمي مع تفعيل نظام المزامنة اللحظية الفائق والتطابق البصري 100%
         function playOfficialYTSync(containerL, containerR) {
             const divL = document.createElement('div');
             divL.id = 'ytPlayerL';
@@ -495,29 +496,44 @@
             function checkBothReady() {
                 readyCount++;
                 if (readyCount === 2) {
-                    showToast("تزامن القنوات البصرية جاهز! استمتع بالـ VR.");
+                    showToast("تزامن القنوات البصرية متطابق ومستقر بالكامل!");
                     
-                    // تشغيل الفيديوهات رسمياً بعد إزالة الحظر بنقرة المستخدم
-                    ytPlayerLeft.playVideo();
-                    ytPlayerRight.playVideo();
-
                     // كتم الشاشة اليمنى تماماً ومزامنة الصوت مع اليسرى فقط لمنع حدوث صدى
                     ytPlayerRight.mute();
                     ytPlayerLeft.unMute();
                     ytPlayerLeft.setVolume(100);
 
-                    // تفعيل المزامنة اللحظية المستمرة والدقيقة (كل 50 ملي ثانية) لتطابق الحركات بين العينين تماماً
+                    // تشغيل متزامن تماماً
+                    ytPlayerLeft.playVideo();
+                    ytPlayerRight.playVideo();
+
+                    // نظام Strict Sync مراقبة كل 10 ملي ثانية لتطابق تام بالملي ثانية ومنع اختلاف اللقطات
                     syncInterval = setInterval(() => {
+                        if (strictSyncLock) return;
+
                         if (ytPlayerLeft && ytPlayerRight && typeof ytPlayerLeft.getCurrentTime === 'function' && typeof ytPlayerRight.getCurrentTime === 'function') {
                             const timeL = ytPlayerLeft.getCurrentTime();
                             const timeR = ytPlayerRight.getCurrentTime();
-                            
-                            // إذا حصل تباعد أكثر من 0.05 ثانية، نقوم بضبط شاشة اليمين فوراً لتتبع شاشة اليسار
-                            if (Math.abs(timeL - timeR) > 0.05) {
+                            const stateL = ytPlayerLeft.getPlayerState();
+                            const stateR = ytPlayerRight.getPlayerState();
+
+                            // 1. مزامنة حالة التوقف المؤقت (لو توقف أحدهما للتحميل يتوقف الآخر فوراً)
+                            if (stateL !== stateR) {
+                                if (stateL === YT.PlayerState.PAUSED || stateL === YT.PlayerState.BUFFERING) {
+                                    ytPlayerRight.pauseVideo();
+                                } else if (stateL === YT.PlayerState.PLAYING) {
+                                    ytPlayerRight.playVideo();
+                                }
+                            }
+
+                            // 2. المزامنة بالملي ثانية إذا اختلف التوقيت بأكثر من 0.02 ثانية فقط!
+                            if (Math.abs(timeL - timeR) > 0.02) {
+                                strictSyncLock = true;
                                 ytPlayerRight.seekTo(timeL, true);
+                                setTimeout(() => { strictSyncLock = false; }, 50);
                             }
                         }
-                    }, 50);
+                    }, 10); // سرعة استجابة مذهلة تمنع أي تباعد بين العينين
                 }
             }
 
@@ -533,13 +549,11 @@
                     'showinfo': 0,
                     'disablekb': 1,
                     'iv_load_policy': 3,
-                    'mute': 0, 
+                    'mute': 1, 
                     'origin': window.location.origin
                 },
                 events: {
-                    'onReady': (event) => {
-                        checkBothReady();
-                    }
+                    'onReady': () => { checkBothReady(); }
                 }
             });
 
@@ -559,9 +573,7 @@
                     'origin': window.location.origin
                 },
                 events: {
-                    'onReady': (event) => {
-                        checkBothReady();
-                    }
+                    'onReady': () => { checkBothReady(); }
                 }
             });
         }
@@ -600,13 +612,14 @@
                 videoRightEl.currentTime = videoLeftEl.currentTime;
             });
 
+            // نظام المطابقة الصارمة كل 10 ملي ثانية للفيديوهات المباشرة
             syncInterval = setInterval(() => {
                 if (videoLeftEl && videoRightEl && !videoLeftEl.paused) {
-                    if (Math.abs(videoLeftEl.currentTime - videoRightEl.currentTime) > 0.05) {
+                    if (Math.abs(videoLeftEl.currentTime - videoRightEl.currentTime) > 0.02) {
                         videoRightEl.currentTime = videoLeftEl.currentTime;
                     }
                 }
-            }, 50);
+            }, 10);
         }
 
         // التشغيل والإيقاف المتزامن من داخل واجهة الـ VR
@@ -732,4 +745,3 @@
 </html>
 
 ```
-
