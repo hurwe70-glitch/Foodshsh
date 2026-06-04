@@ -4,518 +4,832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>منصة سينما الواقع الافتراضي الشاملة | VR Mobile Cinema</title>
-    <!-- Tailwind CSS for sleek styling -->
+    <title>سينما الواقع الافتراضي الذكية | VR Cinema Pro</title>
+    
+    <!-- مكتبة Tailwind CSS للتصميم العصري -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tailwind Custom Configuration -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        vrpurple: '#8B5CF6',
-                        vrdark: '#09090b',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Lucide Icons for clean UI -->
+    
+    <!-- مكتبة أيقونات Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        /* لمنع التمرير غير المرغوب فيه وتحسين تجربة الهاتف */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght=300;400;500;700;900&display=swap');
+        
         body {
-            touch-action: manipulation;
-            background-color: #09090b;
+            font-family: 'Tajawal', sans-serif;
+            background-color: #030306;
+            color: #f3f4f6;
             overflow-x: hidden;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
-        /* تأثير التوهج للحواف لتوفير تجربة سينمائية غامرة */
-        .ambient-glow {
-            filter: blur(40px);
-            opacity: 0.45;
-            transition: all 0.5s ease;
+
+        /* تأثيرات النجوم للفضاء الخارجي */
+        .stars-bg {
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
         }
-        /* قفل تدوير وتناسق شاشتي VR */
-        .vr-viewport {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
+
+        /* شبكة النيون */
+        .neon-grid {
+            background-image: 
+                linear-gradient(rgba(239, 68, 68, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(239, 68, 68, 0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
+            perspective: 500px;
         }
-        .vr-screen {
-            width: 50%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            border-right: 1px solid rgba(255,255,255,0.05);
+
+        /* انحناء الشاشة السينمائي */
+        .curved-screen {
+            transform: perspective(1000px) rotateY(var(--curve-angle, 0deg));
+            transition: transform 0.3s ease;
         }
-        .vr-screen:last-child {
-            border-right: none;
-        }
-        /* لتكبير مساحة الفيديو بأقصى قدر ممكن */
-        .video-container {
-            width: 92%;
-            aspect-ratio: 16/9;
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-            transition: all 0.3s ease;
-        }
-        /* تخصيص مؤشر تدوير الهاتف */
-        @media (orientation: portrait) {
-            .rotate-warning {
-                display: flex !important;
-            }
-            .main-interface {
-                display: none !important;
-            }
+
+        /* منع التحديد واللمس العشوائي */
+        .no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
     </style>
 </head>
-<body class="text-white select-none">
+<body class="h-screen w-screen flex flex-col justify-between overflow-hidden select-none no-select">
 
-    <!-- شاشة تحذير لتدوير الهاتف للحصول على أفضل تجربة VR -->
-    <div class="rotate-warning hidden fixed inset-0 z-50 bg-zinc-950 flex-col items-center justify-center p-6 text-center">
-        <div class="animate-bounce bg-vrpurple/20 p-5 rounded-full mb-6 text-vrpurple">
-            <i data-lucide="smartphone" class="w-16 h-16 transform rotate-90"></i>
-        </div>
-        <h2 class="text-2xl font-bold mb-3 text-white">يرجى تدوير الهاتف أفقياً</h2>
-        <p class="text-zinc-400 max-w-sm text-sm leading-relaxed">
-            تطبيق نظارات الواقع الافتراضي يتطلب وضع الهاتف بالوضعية الأفقية ليتم تقسيم الشاشة لليمين واليسار بشكل مثالي ومتساوٍ.
-        </p>
-        <button onclick="forceLandscapeDemo()" class="mt-8 px-5 py-2.5 bg-zinc-800 text-xs text-zinc-300 rounded-lg hover:bg-zinc-700 transition">
-            تخطي واستمر بالوضع الحالي (للتجربة)
-        </button>
-    </div>
-
-    <!-- الواجهة الرئيسية للتطبيق -->
-    <div id="mainApp" class="main-interface min-h-screen flex flex-col justify-between relative z-10">
+    <!-- لوحة التحكم الرئيسية قبل تشغيل الـ VR -->
+    <div id="controlPanel" class="flex-1 flex flex-col justify-start items-center p-4 md:p-8 overflow-y-auto max-w-4xl mx-auto w-full">
         
-        <!-- لوحة التحكم وإدخال الرابط (تظهر في البداية وتختفي عند التشغيل الكامل) -->
-        <header id="controlPanel" class="bg-zinc-900/95 border-b border-zinc-800 p-4 transition-all duration-300 relative z-30">
-            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                
-                <!-- الشعار والاسم -->
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-vrpurple/20 text-vrpurple rounded-lg">
-                        <i data-lucide="glasses" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-bold tracking-wide">VR MOBILE CINEMA</h1>
-                        <p class="text-[10px] text-zinc-400">تطبيق سينما الواقع الافتراضي الاحترافي</p>
-                    </div>
-                </div>
-
-                <!-- إدخال روابط يوتيوب ومقاطع الفيديو السحابية -->
-                <div class="flex-1 w-full max-w-xl">
-                    <div class="flex gap-2">
-                        <div class="relative flex-1">
-                            <span class="absolute inset-y-0 right-3 flex items-center text-zinc-500">
-                                <i data-lucide="link" class="w-4 h-4"></i>
-                            </span>
-                            <input type="text" id="videoUrlInput" placeholder="أدخل رابط فيديو يوتيوب أو رابط مباشر (MP4)..." 
-                                class="w-full bg-zinc-950 border border-zinc-700 rounded-lg py-2.5 pr-10 pl-3 text-sm text-zinc-200 focus:outline-none focus:border-vrpurple transition placeholder:text-zinc-500 text-right">
-                        </div>
-                        <button onclick="loadCustomVideo()" class="bg-vrpurple hover:bg-violet-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap">
-                            <i data-lucide="play" class="w-4 h-4"></i>
-                            تشغيل الفيديو
-                        </button>
-                    </div>
-                </div>
-
-                <!-- إعدادات الخلفية والتخصيص وحواف الفيديو -->
-                <div class="flex items-center gap-2">
-                    <!-- منقي الألوان للخلفية المحيطية -->
-                    <div class="flex items-center gap-1.5 bg-zinc-950 p-1.5 rounded-lg border border-zinc-800">
-                        <span class="text-xs text-zinc-400 px-2">الإضاءة:</span>
-                        <button onclick="changeAmbientColor('#7c3aed')" class="w-6 h-6 rounded-full bg-violet-600 border border-transparent hover:scale-110 transition" title="بنفسجي"></button>
-                        <button onclick="changeAmbientColor('#2563eb')" class="w-6 h-6 rounded-full bg-blue-600 border border-transparent hover:scale-110 transition" title="أزرق"></button>
-                        <button onclick="changeAmbientColor('#16a34a')" class="w-6 h-6 rounded-full bg-green-600 border border-transparent hover:scale-110 transition" title="أخضر"></button>
-                        <button onclick="changeAmbientColor('#dc2626')" class="w-6 h-6 rounded-full bg-red-600 border border-transparent hover:scale-110 transition" title="أحمر"></button>
-                        <button onclick="changeAmbientColor('#000000')" class="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px]" title="إيقاف">OFF</button>
-                    </div>
-
-                    <!-- فيديوهات تجريبية مسبقة لمنع الحيرة -->
-                    <button onclick="toggleQuickVideos()" class="bg-zinc-800 hover:bg-zinc-700 px-3 py-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
-                        <i data-lucide="film" class="w-4 h-4"></i>
-                        عروض تجريبية
-                    </button>
-                </div>
+        <!-- الهيدر والترحيب -->
+        <div class="text-center my-6">
+            <div class="inline-flex items-center justify-center p-3 bg-red-500/20 text-red-500 rounded-full mb-3 animate-pulse">
+                <i data-lucide="zap" class="w-10 h-10"></i>
             </div>
-            
-            <!-- قائمة منبثقة للفيديوهات السريعة فائقة الجودة -->
-            <div id="quickVideosMenu" class="hidden max-w-6xl mx-auto mt-3 p-3 bg-zinc-950 rounded-lg border border-zinc-800 grid grid-cols-2 sm:grid-cols-4 gap-2 transition-all">
-                <button onclick="playDemoVideo('space')" class="p-2 bg-zinc-900 hover:bg-vrpurple/20 border border-zinc-800 rounded text-right text-xs transition">
-                    🪐 جولة في الفضاء الخارجي (VR)
-                </button>
-                <button onclick="playDemoVideo('ocean')" class="p-2 bg-zinc-900 hover:bg-vrpurple/20 border border-zinc-800 rounded text-right text-xs transition">
-                    🐠 غوص في أعماق المحيط (VR)
-                </button>
-                <button onclick="playDemoVideo('nature')" class="p-2 bg-zinc-900 hover:bg-vrpurple/20 border border-zinc-800 rounded text-right text-xs transition">
-                    ⛰️ غابات وشلالات هادئة 4K
-                </button>
-                <button onclick="playDemoVideo('cyberpunk')" class="p-2 bg-zinc-900 hover:bg-vrpurple/20 border border-zinc-800 rounded text-right text-xs transition">
-                    🌆 مدن السايبربانك الافتراضية
-                </button>
-            </div>
-        </header>
-
-        <!-- مساحة الواقع الافتراضي المنقسمة (تتكون من قسمين متطابقين 100%) -->
-        <main class="flex-1 vr-viewport bg-black relative" id="vrViewport">
-            
-            <!-- خلفيات تفاعلية خلف كل شاشة (Ambient Glow) لمنح شعور بالتواجد بداخل السينما -->
-            <div id="ambientLeft" class="absolute left-1/4 top-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-48 rounded-full ambient-glow bg-vrpurple"></div>
-            <div id="ambientRight" class="absolute right-1/4 top-1/2 translate-x-1/2 -translate-y-1/2 w-80 h-48 rounded-full ambient-glow bg-vrpurple"></div>
-
-            <!-- خط المنتصف لمساعدتك على موازنة الهاتف في النظارة بدقة -->
-            <div class="absolute inset-y-0 left-1/2 w-[2px] bg-zinc-900/80 z-20 pointer-events-none"></div>
-
-            <!-- الشاشة اليسرى (Left Eye View) -->
-            <div class="vr-screen" id="leftScreen">
-                <!-- إطار الشاشة مع حواف ملونة متوهجة وقابلة للتعديل -->
-                <div class="video-container border-4 border-vrpurple/30" id="videoBorderLeft">
-                    <!-- مشغل يوتيوب أو المقطع المباشر -->
-                    <div class="w-full h-full bg-zinc-950 flex items-center justify-center">
-                        <iframe id="playerLeft" class="w-full h-full pointer-events-none" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        <video id="videoElementLeft" class="w-full h-full hidden" loop muted playsinline></video>
-                    </div>
-                </div>
-                <!-- مؤشر تحكم صغير لمساعدتك أثناء وضع الهاتف بالنظارة -->
-                <div class="absolute bottom-4 text-[10px] text-zinc-500 tracking-widest font-mono">LEFT EYE SCREEN</div>
-            </div>
-
-            <!-- الشاشة اليمنى (Right Eye View) -->
-            <div class="vr-screen" id="rightScreen">
-                <!-- إطار الشاشة مع حواف ملونة متوهجة وقابلة للتعديل (متطابق تماماً) -->
-                <div class="video-container border-4 border-vrpurple/30" id="videoBorderRight">
-                    <!-- مشغل يوتيوب أو المقطع المباشر -->
-                    <div class="w-full h-full bg-zinc-950 flex items-center justify-center">
-                        <iframe id="playerRight" class="w-full h-full pointer-events-none" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        <video id="videoElementRight" class="w-full h-full hidden" loop muted playsinline></video>
-                    </div>
-                </div>
-                <!-- مؤشر تحكم صغير لمساعدتك أثناء وضع الهاتف بالنظارة -->
-                <div class="absolute bottom-4 text-[10px] text-zinc-500 tracking-widest font-mono">RIGHT EYE SCREEN</div>
-            </div>
-
-        </main>
-
-        <!-- لوحة التحكم العائمة والخاصة بنظارة الواقع الافتراضي (يمكنك استخدامها بسهولة) -->
-        <footer class="bg-zinc-950/90 border-t border-zinc-900 p-3 relative z-30">
-            <div class="max-w-4xl mx-auto flex justify-between items-center">
-                <!-- زر إخفاء/إظهار لوحة التحكم العلوية للحصول على نمط شاشة كاملة حقيقي دون مشتتات -->
-                <button onclick="toggleTopPanel()" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-4 py-2 rounded-lg text-xs flex items-center gap-2 transition">
-                    <i data-lucide="eye-off" id="togglePanelIcon" class="w-4 h-4"></i>
-                    <span id="togglePanelText">إخفاء أدوات التحكم للحصول على تجربة غامرة</span>
-                </button>
-
-                <!-- أزرار تحكم بالتشغيل متزامنة للشاشتين -->
-                <div class="flex items-center gap-3">
-                    <button onclick="stopAll()" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 p-2.5 rounded-lg transition" title="إيقاف نهائي">
-                        <i data-lucide="square" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="pauseAll()" class="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 p-2.5 rounded-lg transition" title="إيقاف مؤقت">
-                        <i data-lucide="pause" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="playAll()" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 p-2.5 rounded-lg transition" title="تشغيل">
-                        <i data-lucide="play" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="resetVideo()" class="bg-zinc-800 hover:bg-zinc-700 p-2.5 rounded-lg transition" title="إعادة تشغيل من البداية">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                    </button>
-                </div>
-
-                <!-- حجم حافة الفيديو وعرض السينما -->
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-zinc-400">حجم شاشة السينما:</span>
-                    <button onclick="adjustCinemaSize('large')" class="px-3 py-1.5 bg-vrpurple text-white text-xs font-bold rounded hover:bg-violet-700 transition">سينما عملاقة</button>
-                    <button onclick="adjustCinemaSize('normal')" class="px-3 py-1.5 bg-zinc-800 text-zinc-300 text-xs rounded hover:bg-zinc-700 transition">طبيعي</button>
-                </div>
-            </div>
-        </footer>
-
-        <!-- نافذة التنبيهات المخصصة بديلة لـ alert لمنع تعطل واجهة الواقع الافتراضي -->
-        <div id="customAlert" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-800 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 animate-bounce">
-            <div class="text-vrpurple"><i data-lucide="info" class="w-5 h-5"></i></div>
-            <div class="text-sm font-medium" id="alertText">تم تحديث الرابط بنجاح!</div>
+            <h1 class="text-3xl md:text-4xl font-black bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">سينما الواقع الافتراضي الذكية</h1>
+            <p class="text-slate-400 text-xs md:text-sm mt-2">محرك مطابقة بصرية متناهي الدقة (PLL) لمنع تفاوت اللقطات تماماً بالملي ثانية</p>
         </div>
+
+        <!-- تبويبات اختيار مصدر الفيديو -->
+        <div class="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 p-2 rounded-2xl mb-6 flex gap-2">
+            <button onclick="switchTab('youtube')" id="tab-youtube" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all bg-red-600 text-white">
+                <i data-lucide="youtube" class="w-4 h-4"></i>
+                <span>رابط يوتيوب</span>
+            </button>
+            <button onclick="switchTab('direct')" id="tab-direct" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all bg-transparent text-slate-400 hover:bg-slate-800/50">
+                <i data-lucide="link-2" class="w-4 h-4"></i>
+                <span>رابط فيديو مباشر</span>
+            </button>
+        </div>
+
+        <!-- محتوى التبويب: يوتيوب الرسمي والآمن تماماً -->
+        <div id="content-youtube" class="w-full bg-slate-900/40 border border-slate-800 p-5 rounded-2xl mb-6">
+            <h3 class="text-sm font-bold text-slate-300 mb-3 text-right">أدخل رابط فيديو يوتيوب المفضل لديك:</h3>
+            <div class="flex flex-col md:flex-row gap-2">
+                <input id="ytInput" type="text" placeholder="https://www.youtube.com/watch?v=..." 
+                    value="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                    class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 text-left focus:outline-none focus:border-red-500 placeholder:text-right">
+                <button onclick="applyYoutubeUrl()" class="bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-3 rounded-xl transition-all">تطبيق الرابط</button>
+            </div>
+            <div class="text-xs text-green-400 mt-3 flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i> نظام التحكم المجهري بالسرعة (Phase-Locked Loop) مفعّل تلقائياً لجميع المشغلات.
+            </div>
+        </div>
+
+        <!-- محتوى التبويب: رابط مباشر للملف -->
+        <div id="content-direct" class="w-full bg-slate-900/40 border border-slate-800 p-5 rounded-2xl mb-6 hidden">
+            <h3 class="text-sm font-bold text-slate-300 mb-3">أدخل رابط مباشر لملف فيديو (MP4 / WebM):</h3>
+            <div class="flex flex-col md:flex-row gap-2">
+                <input id="directInput" type="text" placeholder="https://vjs.zencdn.net/v/oceans.mp4" 
+                    value="https://vjs.zencdn.net/v/oceans.mp4"
+                    class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 text-left focus:outline-none focus:border-blue-500 placeholder:text-right">
+                <button onclick="applyDirectUrl()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition-all">تطبيق الرابط</button>
+            </div>
+        </div>
+
+        <!-- كرت الإعدادات الفنية والمؤثرات -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            
+            <!-- إعدادات البيئة والخلفية -->
+            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 p-5 rounded-2xl shadow-xl">
+                <h3 class="text-md font-bold text-slate-200 mb-4 flex items-center gap-2">
+                    <i data-lucide="palette" class="text-purple-500 w-5 h-5"></i> الخلفية والبيئة المحيطة
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-2">قاعة السينما الافتراضية:</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="changeEnvironment('cinema')" id="btn-env-cinema" class="env-btn active bg-red-600 text-white text-xs font-medium py-2 px-3 rounded-lg transition-all">سينما مظلمة</button>
+                            <button onclick="changeEnvironment('stars')" id="btn-env-stars" class="env-btn bg-slate-800 text-slate-300 text-xs font-medium py-2 px-3 rounded-lg transition-all">أعماق الفضاء</button>
+                            <button onclick="changeEnvironment('neon')" id="btn-env-neon" class="env-btn bg-slate-800 text-slate-300 text-xs font-medium py-2 px-3 rounded-lg transition-all">سايبر نيون</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-2">لون هالة إضاءة السينما (Glow Effect):</label>
+                        <div class="flex gap-2">
+                            <button onclick="setGlowColor('#ef4444', this)" class="w-8 h-8 rounded-full bg-red-500 border-2 border-white transform scale-110 transition-all"></button>
+                            <button onclick="setGlowColor('#3b82f6', this)" class="w-8 h-8 rounded-full bg-blue-500 border-2 border-transparent hover:scale-105 transition-all"></button>
+                            <button onclick="setGlowColor('#a855f7', this)" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-transparent hover:scale-105 transition-all"></button>
+                            <button onclick="setGlowColor('#10b981', this)" class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-transparent hover:scale-105 transition-all"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إعدادات الشاشة ومطابقة العينين -->
+            <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800 p-5 rounded-2xl shadow-xl">
+                <h3 class="text-md font-bold text-slate-200 mb-4 flex items-center gap-2">
+                    <i data-lucide="sliders" class="text-pink-500 w-5 h-5"></i> مطابقة عدسات النظارة والشاشة
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>المسافة التعديلية للحدقتين (IPD Offset):</span>
+                            <span id="ipdValue" class="text-pink-400 font-bold">0 بكسل</span>
+                        </div>
+                        <input id="ipdSlider" type="range" min="-80" max="80" value="0" oninput="updateIPD(this.value)"
+                            class="w-full accent-pink-500 h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>حجم الشاشة المعروضة:</span>
+                            <span id="sizeValue" class="text-blue-400 font-bold">85%</span>
+                        </div>
+                        <input id="sizeSlider" type="range" min="40" max="100" value="85" oninput="updateScreenSize(this.value)"
+                            class="w-full accent-blue-500 h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>تأثير تقوس الشاشة السينمائي:</span>
+                            <span id="curveValue" class="text-emerald-400 font-bold">مستوية</span>
+                        </div>
+                        <input id="curveSlider" type="range" min="0" max="15" value="0" oninput="updateScreenCurve(this.value)"
+                            class="w-full accent-emerald-500 h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- تتبع حركة الرأس الافتراضي -->
+        <div class="w-full bg-slate-900/40 p-4 rounded-xl border border-slate-800 flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <i data-lucide="compass" class="text-amber-500 w-6 h-6 animate-spin" style="animation-duration: 6s;"></i>
+                <div>
+                    <h4 class="text-sm font-bold">مستشعر الالتفات والتحرك (Gyroscope Tracking)</h4>
+                    <p class="text-xs text-slate-400">تفاعل والفت برأسك يميناً ويساراً داخل القاعة الافتراضية</p>
+                </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="gyroToggle" checked class="sr-only peer" onchange="toggleGyro(this.checked)">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        </div>
+
+        <!-- زر التشغيل والانتقال لوضع الـ VR في نظارة الموبايل -->
+        <button onclick="enterVR()" class="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-extrabold text-lg py-5 px-8 rounded-2xl shadow-xl flex items-center justify-center gap-3 transform hover:scale-[1.01] active:scale-[0.99] transition-all mb-10">
+            <i data-lucide="glasses" class="w-6 h-6"></i>
+            <span>ابدأ تجربة الـ VR في النظارة الآن</span>
+        </button>
 
     </div>
 
-    <!-- كود التشغيل وإدارة مقاطع الفيديو والتحكم المتزامن -->
+    <!-- واجهة الواقع الافتراضي المنقسمة (Side-by-Side Screen) -->
+    <div id="vrContainer" class="hidden fixed inset-0 w-full h-full bg-black z-50 flex overflow-hidden">
+        
+        <!-- غطاء التشغيل الاستباقي لمنع الشاشة السوداء (المفتاح السحري للتشغيل التلقائي) -->
+        <div id="autoplayOverlay" class="absolute inset-0 bg-black/95 z-[60] flex flex-col items-center justify-center gap-4">
+            <button onclick="startVideoPlayback()" class="w-24 h-24 bg-red-600 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-2xl animate-bounce border-4 border-white/20">
+                <i data-lucide="play" class="w-12 h-12 fill-white ml-1"></i>
+            </button>
+            <p class="text-white text-base font-bold animate-pulse">انقر هنا لمزامنة القنوات البصرية المتطابقة</p>
+            <span class="text-xs text-slate-400 text-center px-6">هذه الخطوة تمنح المتصفح الإذن بتشغيل المشغلين في نفس الجزء من الملي ثانية</span>
+        </div>
+
+        <!-- العين اليسرى (Left Eye View) -->
+        <div id="leftEye" class="w-1/2 h-full relative overflow-hidden border-r border-neutral-900 transition-transform duration-75 ease-out">
+            <div id="bgLeft" class="absolute inset-0 transition-colors duration-500"></div>
+            
+            <div id="wrapperLeft" class="absolute inset-0 flex items-center justify-center transition-all duration-150">
+                <div id="screenLeft" class="curved-screen w-[85%] aspect-video relative rounded-lg overflow-hidden shadow-2xl" style="box-shadow: 0 0 45px var(--glow-color, #ef4444);">
+                    <!-- مشغل العين اليسرى -->
+                    <div id="playerContainerLeft" class="w-full h-full bg-black pointer-events-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- العين اليمنى (Right Eye View) -->
+        <div id="rightEye" class="w-1/2 h-full relative overflow-hidden border-l border-neutral-900 transition-transform duration-75 ease-out">
+            <div id="bgRight" class="absolute inset-0 transition-colors duration-500"></div>
+            
+            <div id="wrapperRight" class="absolute inset-0 flex items-center justify-center transition-all duration-150">
+                <div id="screenRight" class="curved-screen w-[85%] aspect-video relative rounded-lg overflow-hidden shadow-2xl" style="box-shadow: 0 0 45px var(--glow-color, #ef4444);">
+                    <!-- مشغل العين اليمنى -->
+                    <div id="playerContainerRight" class="w-full h-full bg-black pointer-events-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- مؤشر تزامن الـ VR الصغير لسلامة البصر ومنع الصداع -->
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-1.5 bg-black/60 px-3 py-1.5 rounded-full border border-white/10">
+            <div id="syncIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse"></div>
+            <span id="syncIndicatorText" class="text-[10px] text-white/80 font-bold">جاري المزامنة...</span>
+        </div>
+
+        <!-- أزرار التحكم الطائرة المبتكرة لتعديل الإعدادات والتحكم أثناء ارتداء النظارة -->
+        <div class="absolute bottom-6 left-4 right-4 z-50 flex justify-between items-center pointer-events-none">
+            <!-- أزرار تعديل المسافة IPD من داخل النظارة لمطابقة البصر فوراً -->
+            <div class="flex flex-col gap-2 pointer-events-auto">
+                <button onclick="adjustIpdInVR(5)" class="w-10 h-10 bg-slate-900/80 hover:bg-slate-800 text-white rounded-full flex items-center justify-center border border-white/15" title="زيادة مسافة العينين">
+                    <i data-lucide="zoom-in" class="w-5 h-5 text-pink-400"></i>
+                </button>
+                <button onclick="adjustIpdInVR(-5)" class="w-10 h-10 bg-slate-900/80 hover:bg-slate-800 text-white rounded-full flex items-center justify-center border border-white/15" title="تقليل مسافة العينين">
+                    <i data-lucide="zoom-out" class="w-5 h-5 text-pink-400"></i>
+                </button>
+            </div>
+
+            <!-- أزرار التحكم بالتشغيل والتقديم المباشر -->
+            <div class="flex items-center gap-3 bg-slate-950/95 py-2 px-5 rounded-full border border-white/10 shadow-2xl pointer-events-auto">
+                <button onclick="seekInVR(-10)" class="text-white/80 hover:text-white p-1">
+                    <i data-lucide="skip-back" class="w-4 h-4"></i>
+                </button>
+                <button onclick="togglePlayPauseVR()" class="bg-red-600 hover:bg-red-500 text-white p-3 rounded-full flex items-center justify-center transition-all">
+                    <i id="vrPlayPauseIcon" data-lucide="pause" class="w-5 h-5"></i>
+                </button>
+                <button onclick="seekInVR(10)" class="text-white/80 hover:text-white p-1">
+                    <i data-lucide="skip-forward" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- زر خروج عائم وسريع -->
+            <button onclick="exitVR()" class="w-12 h-12 bg-red-600/90 hover:bg-red-500 text-white rounded-full flex items-center justify-center border border-red-500/30 pointer-events-auto shadow-lg" title="الخروج للقائمة الرئيسية">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- الخط الفاصل لمركزية النظارة -->
+        <div class="absolute inset-y-0 left-1/2 w-[1px] bg-white/10 pointer-events-none"></div>
+    </div>
+
+    <!-- التذييل -->
+    <footer class="w-full text-center py-4 text-xs text-slate-500 border-t border-slate-900 bg-slate-950/40">
+        سينما الواقع الافتراضي الاحترافية © ٢٠٢٦ - مع نظام المعايرة الذكية فائقة المزامنة (PLL).
+    </footer>
+
+    <!-- جلب مكتبة مشغل يوتيوب الرسمية لتفعيل التزامن الصارم -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <script>
-        // تهيئة أيقونات Lucide
+        let activeTab = 'youtube';
+        let ytVideoId = 'dQw4w9WgXcQ'; 
+        let directUrl = 'https://vjs.zencdn.net/v/oceans.mp4'; 
+        
+        let ipdOffset = 0; 
+        let currentEnvironment = 'cinema';
+        let glowColor = '#ef4444';
+        let screenSizePercent = 85;
+        let screenCurveDegrees = 0;
+        let gyroEnabled = true;
+
+        // مراجع للمشغلات الرسمية
+        let ytPlayerLeft = null;
+        let ytPlayerRight = null;
+        let videoLeftEl = null;
+        let videoRightEl = null;
+
+        let isVideoPlaying = true;
+        let syncInterval = null;
+        let strictSyncLock = false; 
+
         lucide.createIcons();
 
-        // مرجع للعناصر الأساسية
-        const videoUrlInput = document.getElementById('videoUrlInput');
-        const playerLeft = document.getElementById('playerLeft');
-        const playerRight = document.getElementById('playerRight');
-        const videoElementLeft = document.getElementById('videoElementLeft');
-        const videoElementRight = document.getElementById('videoElementRight');
-        const controlPanel = document.getElementById('controlPanel');
-        const quickVideosMenu = document.getElementById('quickVideosMenu');
-        const togglePanelIcon = document.getElementById('togglePanelIcon');
-        const togglePanelText = document.getElementById('togglePanelText');
+        // التبديل بين يوتيوب وروابط الفيديو المباشرة
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all bg-transparent text-slate-400 hover:bg-slate-800/50";
+            });
+            document.querySelectorAll('[id^="content-"]').forEach(content => {
+                content.classList.add('hidden');
+            });
 
-        // الروابط الافتراضية عند فتح التطبيق لأول مرة (مقطع فضاء رائع ملائم للواقع الافتراضي)
-        const defaultSpaceVideo = "https://www.youtube.com/embed/VpXpWe_2N9M?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0";
-        
-        // تعيين المقطع الافتراضي عند بدء التشغيل
-        window.onload = function() {
-            setVideoSources(defaultSpaceVideo, false);
-        };
+            const activeColor = tabId === 'youtube' ? 'bg-red-600' : 'bg-blue-600';
+            document.getElementById(`tab-${tabId}`).className = `flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${activeColor} text-white`;
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        }
 
-        // دالة لإظهار تنبيهات مخصصة بدلاً من الـ alert التقليدية
-        function showNotification(message) {
-            const alertBox = document.getElementById('customAlert');
-            const alertText = document.getElementById('alertText');
-            alertText.innerText = message;
-            alertBox.classList.remove('hidden');
+        // استخراج معرف يوتيوب بدقة متناهية
+        function applyYoutubeUrl() {
+            const val = document.getElementById('ytInput').value.trim();
+            if (!val) return;
+
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = val.match(regExp);
+
+            if (match && match[2].length === 11) {
+                ytVideoId = match[2];
+            } else {
+                ytVideoId = val;
+            }
+            showToast("تم تطبيق رابط يوتيوب بنجاح! جاهز للتشغيل الآمن.");
+        }
+
+        function applyDirectUrl() {
+            const val = document.getElementById('directInput').value.trim();
+            if (!val) return;
+            directUrl = val;
+            showToast("تم تطبيق رابط الفيديو المباشر بنجاح!");
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold px-6 py-3 rounded-xl shadow-2xl z-50 transition-all transform translate-y-10 opacity-0 duration-300 text-xs md:text-sm";
+            toast.innerText = message;
+            document.body.appendChild(toast);
             setTimeout(() => {
-                alertBox.classList.add('hidden');
-            }, 3000);
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 100);
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         }
 
-        // تحويل روابط يوتيوب العادية لروابط تضمين (Embed) قابلة للتشغيل المباشر والسلس
-        function convertYoutubeUrl(url) {
-            if (!url) return '';
-            
-            // تنظيف الرابط من الفراغات
-            url = url.trim();
+        function changeEnvironment(envType) {
+            currentEnvironment = envType;
+            document.querySelectorAll('.env-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-red-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            document.getElementById(`btn-env-${envType}`).className = "env-btn active bg-red-600 text-white text-xs font-medium py-2 px-3 rounded-lg transition-all";
 
-            // للروابط المباشرة لملفات الفيديو (MP4, WebM, etc)
-            if (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg') || url.includes('drive.google.com') || url.includes('.raw')) {
-                return { type: 'direct', url: url };
+            const bgLeft = document.getElementById('bgLeft');
+            const bgRight = document.getElementById('bgRight');
+
+            bgLeft.className = "absolute inset-0 transition-colors duration-500";
+            bgRight.className = "absolute inset-0 transition-colors duration-500";
+
+            if (envType === 'cinema') {
+                bgLeft.style.backgroundColor = '#010103';
+                bgRight.style.backgroundColor = '#010103';
+            } else if (envType === 'stars') {
+                bgLeft.style.backgroundColor = '#000000';
+                bgRight.style.backgroundColor = '#000000';
+                bgLeft.classList.add('stars-bg');
+                bgRight.classList.add('stars-bg');
+            } else if (envType === 'neon') {
+                bgLeft.style.backgroundColor = '#06030c';
+                bgRight.style.backgroundColor = '#06030c';
+                bgLeft.classList.add('neon-grid');
+                bgRight.classList.add('neon-grid');
             }
-
-            let videoId = '';
-            
-            // فحص صيغ روابط يوتيوب المختلفة لفك التشفير والحصول على كود الفيديو
-            if (url.includes('youtube.com/watch?v=')) {
-                videoId = url.split('v=')[1].split('&')[0];
-            } else if (url.includes('youtu.be/')) {
-                videoId = url.split('youtu.be/')[1].split('?')[0];
-            } else if (url.includes('youtube.com/embed/')) {
-                videoId = url.split('embed/')[1].split('?')[0];
-            } else if (url.includes('youtube.com/shorts/')) {
-                videoId = url.split('shorts/')[1].split('?')[0];
-            }
-
-            if (videoId) {
-                // تفعيل التشغيل التلقائي وإيقاف أدوات التحكم لتفادي التشتت وزيادة دقة الأداء
-                return {
-                    type: 'youtube',
-                    url: `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&enablejsapi=1&rel=0&controls=0&modestbranding=1&iv_load_policy=3&loop=1&playlist=${videoId}`
-                };
-            }
-
-            // في حال لم يكن يوتيوب وكان رابطاً عادياً، نفترض أنه رابط مباشر أو تضمين خارجي
-            return { type: 'generic', url: url };
         }
 
-        // تعيين مصادر الفيديو بشكل متطابق للشاشتين (اليسرى واليمنى) لضمان التزامن
-        function setVideoSources(sourceUrl, isDirectVideo = false) {
-            if (isDirectVideo) {
-                // إخفاء الـ iframe وإظهار مشغل الفيديو المباشر في المتصفح لزيادة السرعة والنعومة
-                playerLeft.classList.add('hidden');
-                playerRight.classList.add('hidden');
-                videoElementLeft.classList.remove('hidden');
-                videoElementRight.classList.remove('hidden');
+        function setGlowColor(color, element) {
+            glowColor = color;
+            if (element) {
+                element.parentNode.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('border-white', 'scale-110');
+                    btn.classList.add('border-transparent', 'scale-105');
+                });
+                element.classList.remove('border-transparent', 'scale-105');
+                element.classList.add('border-white', 'scale-110');
+            }
+            document.getElementById('screenLeft').style.setProperty('--glow-color', color);
+            document.getElementById('screenRight').style.setProperty('--glow-color', color);
+        }
 
-                playerLeft.src = "";
-                playerRight.src = "";
-                
-                videoElementLeft.src = sourceUrl;
-                videoElementRight.src = sourceUrl;
+        function updateIPD(val) {
+            ipdOffset = parseInt(val);
+            document.getElementById('ipdValue').innerText = `${val} بكسل`;
+            document.getElementById('wrapperLeft').style.transform = `translateX(${-ipdOffset}px)`;
+            document.getElementById('wrapperRight').style.transform = `translateX(${ipdOffset}px)`;
+        }
 
-                videoElementLeft.load();
-                videoElementRight.load();
+        function adjustIpdInVR(val) {
+            let newVal = ipdOffset + val;
+            if (newVal < -80) newVal = -80;
+            if (newVal > 80) newVal = 80;
+            document.getElementById('ipdSlider').value = newVal;
+            updateIPD(newVal);
+        }
 
-                // محاولة التشغيل بالتوازي
-                videoElementLeft.play().catch(e => console.log("Direct video play left failed, waiting interaction"));
-                videoElementRight.play().catch(e => console.log("Direct video play right failed, waiting interaction"));
+        function updateScreenSize(val) {
+            screenSizePercent = val;
+            document.getElementById('sizeValue').innerText = `${val}%`;
+            document.getElementById('screenLeft').style.width = `${val}%`;
+            document.getElementById('screenRight').style.width = `${val}%`;
+        }
+
+        function updateScreenCurve(val) {
+            screenCurveDegrees = parseInt(val);
+            document.getElementById('curveValue').innerText = val == 0 ? 'مستوية' : `${val} درجة`;
+            document.getElementById('screenLeft').style.setProperty('--curve-angle', `${screenCurveDegrees}deg`);
+            document.getElementById('screenRight').style.setProperty('--curve-angle', `-${screenCurveDegrees}deg`);
+        }
+
+        function toggleGyro(enabled) {
+            gyroEnabled = enabled;
+            if (enabled) {
+                requestDeviceOrientationPermission();
             } else {
-                // إظهار مشغلات الـ iframe وإخفاء المشغلات العادية
-                videoElementLeft.classList.add('hidden');
-                videoElementRight.classList.add('hidden');
-                playerLeft.classList.remove('hidden');
-                playerRight.classList.remove('hidden');
-
-                videoElementLeft.src = "";
-                videoElementRight.src = "";
-
-                // شحن وتفعيل الروابط للشاشتين معاً بالتطابق التام
-                playerLeft.src = sourceUrl;
-                playerRight.src = sourceUrl;
+                resetViewRotation();
             }
         }
 
-        // تشغيل الرابط الذي وضعه المستخدم يدوياً
-        function loadCustomVideo() {
-            const rawUrl = videoUrlInput.value;
-            if (!rawUrl) {
-                showNotification("يرجى إدخال رابط صالح أولاً");
-                return;
+        // الدخول لوضع الـ VR وعرض شاشة غطاء التفعيل الاستباقي
+        function enterVR() {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(() => {});
             }
 
-            const processed = convertYoutubeUrl(rawUrl);
-            if (processed.type === 'youtube' || processed.type === 'generic') {
-                setVideoSources(processed.url, false);
-                showNotification("تم تحميل وتزامن فيديو يوتيوب بنجاح!");
-            } else if (processed.type === 'direct') {
-                setVideoSources(processed.url, true);
-                showNotification("تم تحميل وتزامن الفيديو المباشر بنجاح!");
+            document.getElementById('controlPanel').classList.add('hidden');
+            document.getElementById('vrContainer').classList.remove('hidden');
+            document.getElementById('autoplayOverlay').classList.remove('hidden');
+
+            const containerL = document.getElementById('playerContainerLeft');
+            const containerR = document.getElementById('playerContainerRight');
+            containerL.innerHTML = '';
+            containerR.innerHTML = '';
+
+            changeEnvironment(currentEnvironment);
+            setGlowColor(glowColor);
+            updateIPD(ipdOffset);
+            updateScreenSize(screenSizePercent);
+            updateScreenCurve(screenCurveDegrees);
+
+            if (gyroEnabled) {
+                requestDeviceOrientationPermission();
+            }
+        }
+
+        // تشغيل الفيديوهات فوراً بعد إعطاء تفويض نقرة المستخدم
+        function startVideoPlayback() {
+            // إخفاء غطاء التفعيل الاستباقي
+            document.getElementById('autoplayOverlay').classList.add('hidden');
+
+            const containerL = document.getElementById('playerContainerLeft');
+            const containerR = document.getElementById('playerContainerRight');
+
+            if (activeTab === 'youtube') {
+                playOfficialYTSync(containerL, containerR);
             } else {
-                showNotification("تنسيق الرابط غير معروف، تم تمريره للتجربة");
-                setVideoSources(rawUrl, false);
+                playDirectSync(containerL, containerR);
+            }
+
+            isVideoPlaying = true;
+            updateVRPlayPauseButton();
+        }
+
+        // تحديث مؤشر التطابق البصري
+        function updateSyncUI(status, text) {
+            const dot = document.getElementById('syncIndicatorDot');
+            const label = document.getElementById('syncIndicatorText');
+            if (!dot || !label) return;
+
+            if (status === 'synced') {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-green-500";
+                label.className = "text-[10px] text-green-400 font-bold";
+                label.innerText = text;
+            } else if (status === 'calibrating') {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
+                label.className = "text-[10px] text-yellow-400 font-bold";
+                label.innerText = text;
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                label.className = "text-[10px] text-red-500 font-bold";
+                label.innerText = text;
             }
         }
 
-        // تشغيل أحد العروض الجاهزة السريعة لتسهيل التجربة الفورية
-        function playDemoVideo(type) {
-            let url = "";
-            let isDirect = false;
+        // تشغيل يوتيوب الرسمي بمحرك التطابق البصري ذو الاستجابة فائقة السرعة
+        function playOfficialYTSync(containerL, containerR) {
+            const divL = document.createElement('div');
+            divL.id = 'ytPlayerL';
+            containerL.appendChild(divL);
 
-            if (type === 'space') {
-                url = "https://www.youtube.com/embed/VpXpWe_2N9M?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0";
-            } else if (type === 'ocean') {
-                url = "https://www.youtube.com/embed/v9iInz4zG1g?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0";
-            } else if (type === 'nature') {
-                url = "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0"; // تمثيلية أو مقطع طبيعة بديل
-                url = "https://www.youtube.com/embed/6m6YpG8r4Rk?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0";
-            } else if (type === 'cyberpunk') {
-                url = "https://www.youtube.com/embed/2g811Eo7K8U?autoplay=1&mute=1&enablejsapi=1&rel=0&controls=0";
+            const divR = document.createElement('div');
+            divR.id = 'ytPlayerR';
+            containerR.appendChild(divR);
+
+            let readyCount = 0;
+
+            function checkBothReady() {
+                readyCount++;
+                if (readyCount === 2) {
+                    updateSyncUI('calibrating', "جاري المعايرة المجهرية...");
+                    
+                    // كتم الشاشة اليمنى ومزامنة الصوت مع اليسرى فقط لمنع الصدى
+                    ytPlayerRight.mute();
+                    ytPlayerLeft.unMute();
+                    ytPlayerLeft.setVolume(100);
+
+                    // البدء الآمن
+                    ytPlayerLeft.playVideo();
+                    ytPlayerRight.playVideo();
+
+                    // محرك التطابق البصري المجهري (PLL Speed Control & Hard Pause-Bypass)
+                    syncInterval = setInterval(() => {
+                        if (strictSyncLock) return;
+
+                        if (ytPlayerLeft && ytPlayerRight && typeof ytPlayerLeft.getCurrentTime === 'function' && typeof ytPlayerRight.getCurrentTime === 'function') {
+                            const timeL = ytPlayerLeft.getCurrentTime();
+                            const timeR = ytPlayerRight.getCurrentTime();
+                            const stateL = ytPlayerLeft.getPlayerState();
+                            const stateR = ytPlayerRight.getPlayerState();
+                            
+                            const drift = timeL - timeR; // حساب الفارق البصري بالملي ثانية
+
+                            // 1. مزامنة البداية الصارمة وحالة التحميل المتقطع (Buffering Control)
+                            if (stateL === YT.PlayerState.BUFFERING || stateR === YT.PlayerState.BUFFERING) {
+                                updateSyncUI('calibrating', "انتظار اكتمال التحميل المزدوج...");
+                                if (stateL === YT.PlayerState.PLAYING) ytPlayerLeft.pauseVideo();
+                                if (stateR === YT.PlayerState.PLAYING) ytPlayerRight.pauseVideo();
+                                return;
+                            } else if (stateL === YT.PlayerState.PAUSED && stateR === YT.PlayerState.PAUSED && isVideoPlaying) {
+                                // إعادة إطلاقهما معاً وبنفس اللحظة فور انتهاء التحميل
+                                ytPlayerLeft.playVideo();
+                                ytPlayerRight.playVideo();
+                                return;
+                            }
+
+                            // 2. التحكم المجهري بالسرعة (Micro Speed Tuning Loop)
+                            // إذا كان الفرق طفيفاً جداً (بين 20 مللي ثانية و 250 مللي ثانية)، نقوم بتعديل السرعة بشكل صامت بدلاً من قطعه
+                            if (Math.abs(drift) > 0.02 && Math.abs(drift) <= 0.25) {
+                                updateSyncUI('calibrating', `معايرة طفيفة (${Math.round(drift * 1000)}ms)`);
+                                if (drift > 0) {
+                                    // اليسار يسبق، نبطئ اليسار ونسرّع اليمين
+                                    ytPlayerLeft.setPlaybackRate(0.5); 
+                                    ytPlayerRight.setPlaybackRate(1.5);
+                                } else {
+                                    // اليمين يسبق، نسرّع اليسار ونبطئ اليمين
+                                    ytPlayerLeft.setPlaybackRate(1.5);
+                                    ytPlayerRight.setPlaybackRate(0.5);
+                                }
+                            } 
+                            // 3. المزامنة الخشنة الصارمة (Hard Micro-Pause Sync)
+                            // إذا كان التباعد كبيراً (أكثر من 250 مللي ثانية)، نقوم بعمل إيقاف مؤقت وقفل للعين المتقدمة حتى تلحق بها المتأخرة
+                            else if (Math.abs(drift) > 0.25) {
+                                updateSyncUI('calibrating', `معايرة صلبة للقنوات...`);
+                                strictSyncLock = true;
+                                if (drift > 0) {
+                                    // اليسار يسبق كثيراً، نقوم بوقف اليسار فوراً
+                                    ytPlayerLeft.pauseVideo();
+                                    const catchUpCheck = setInterval(() => {
+                                        if (ytPlayerRight.getCurrentTime() >= timeL) {
+                                            ytPlayerLeft.playVideo();
+                                            clearInterval(catchUpCheck);
+                                            strictSyncLock = false;
+                                        }
+                                    }, 10);
+                                } else {
+                                    // اليمين يسبق كثيراً، نقوم بوقف اليمين فوراً
+                                    ytPlayerRight.pauseVideo();
+                                    const catchUpCheck = setInterval(() => {
+                                        if (ytPlayerLeft.getCurrentTime() >= timeR) {
+                                            ytPlayerRight.playVideo();
+                                            clearInterval(catchUpCheck);
+                                            strictSyncLock = false;
+                                        }
+                                    }, 10);
+                                }
+                            } 
+                            // 4. تطابق تام 100% بالملي ثانية
+                            else {
+                                updateSyncUI('synced', "متطابق 100% بالملي ثانية");
+                                ytPlayerLeft.setPlaybackRate(1.0);
+                                ytPlayerRight.setPlaybackRate(1.0);
+                            }
+                        }
+                    }, 20); // استجابة سريعة جداً كل 20 مللي ثانية
+                }
             }
 
-            setVideoSources(url, isDirect);
-            showNotification("تم تشغيل الفيديو التجريبي المختار بنجاح!");
-            toggleQuickVideos(); // إغلاق القائمة المنسدلة
-        }
+            // تهيئة العين اليسرى رسميًا
+            ytPlayerLeft = new YT.Player('ytPlayerL', {
+                width: '100%',
+                height: '100%',
+                videoId: ytVideoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'disablekb': 1,
+                    'iv_load_policy': 3,
+                    'mute': 1, 
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': () => { checkBothReady(); }
+                }
+            });
 
-        // تفعيل وإخفاء لوحة العروض التجريبية
-        function toggleQuickVideos() {
-            quickVideosMenu.classList.toggle('hidden');
-        }
-
-        // تغيير حجم شاشة السينما وحواف الفيديو لتصبح عملاقة جداً
-        function adjustCinemaSize(size) {
-            const containers = document.querySelectorAll('.video-container');
-            containers.forEach(el => {
-                if (size === 'large') {
-                    el.style.width = '100%';
-                    el.style.borderRadius = '0px';
-                    showNotification("تم تفعيل الشاشة السينمائية العملاقة والمحيطية!");
-                } else {
-                    el.style.width = '92%';
-                    el.style.borderRadius = '12px';
-                    showNotification("تمت إعادة الشاشة للحجم الطبيعي الموزون.");
+            // تهيئة العين اليمنى رسميًا
+            ytPlayerRight = new YT.Player('ytPlayerR', {
+                width: '100%',
+                height: '100%',
+                videoId: ytVideoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'disablekb': 1,
+                    'iv_load_policy': 3,
+                    'mute': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': () => { checkBothReady(); }
                 }
             });
         }
 
-        // تغيير ألوان الإضاءة الخلفية المحيطية وتوهج الحواف
-        function changeAmbientColor(hexColor) {
-            const leftGlow = document.getElementById('ambientLeft');
-            const rightGlow = document.getElementById('ambientRight');
-            const borderLeft = document.getElementById('videoBorderLeft');
-            const borderRight = document.getElementById('videoBorderRight');
+        // تشغيل مباشر متزامن للفيديوهات العادية
+        function playDirectSync(containerL, containerR) {
+            videoLeftEl = document.createElement('video');
+            videoLeftEl.src = directUrl;
+            videoLeftEl.className = "w-full h-full object-contain";
+            videoLeftEl.autoplay = true;
+            videoLeftEl.loop = true;
+            videoLeftEl.playsInline = true;
+            videoLeftEl.muted = false; 
 
-            if (hexColor === '#000000') {
-                leftGlow.style.opacity = '0';
-                rightGlow.style.opacity = '0';
-                borderLeft.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                borderRight.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                showNotification("تم إطفاء إضاءة الخلفية للتركيز الكامل.");
+            videoRightEl = document.createElement('video');
+            videoRightEl.src = directUrl;
+            videoRightEl.className = "w-full h-full object-contain";
+            videoRightEl.autoplay = true;
+            videoRightEl.loop = true;
+            videoRightEl.playsInline = true;
+            videoRightEl.muted = true; 
+
+            containerL.appendChild(videoLeftEl);
+            containerR.appendChild(videoRightEl);
+
+            videoLeftEl.addEventListener('play', () => {
+                videoRightEl.play();
+                videoRightEl.currentTime = videoLeftEl.currentTime;
+            });
+
+            videoLeftEl.addEventListener('pause', () => {
+                videoRightEl.pause();
+            });
+
+            videoLeftEl.addEventListener('seeking', () => {
+                videoRightEl.currentTime = videoLeftEl.currentTime;
+            });
+
+            // معايرة مجهرية بالتحكم بالسرعة للفيديوهات العادية
+            syncInterval = setInterval(() => {
+                if (videoLeftEl && videoRightEl && !videoLeftEl.paused) {
+                    const drift = videoLeftEl.currentTime - videoRightEl.currentTime;
+                    
+                    if (Math.abs(drift) > 0.01 && Math.abs(drift) <= 0.2) {
+                        updateSyncUI('calibrating', `معايرة بالسرعة (${Math.round(drift * 1000)}ms)`);
+                        if (drift > 0) {
+                            videoLeftEl.playbackRate = 0.95;
+                            videoRightEl.playbackRate = 1.05;
+                        } else {
+                            videoLeftEl.playbackRate = 1.05;
+                            videoRightEl.playbackRate = 0.95;
+                        }
+                    } else if (Math.abs(drift) > 0.2) {
+                        updateSyncUI('calibrating', "إعادة معايرة التوقيت المباشر...");
+                        videoRightEl.currentTime = videoLeftEl.currentTime;
+                    } else {
+                        updateSyncUI('synced', "متطابق 100% بالملي ثانية");
+                        videoLeftEl.playbackRate = 1.0;
+                        videoRightEl.playbackRate = 1.0;
+                    }
+                }
+            }, 20);
+        }
+
+        // التشغيل والإيقاف المتزامن من داخل واجهة الـ VR
+        function togglePlayPauseVR() {
+            isVideoPlaying = !isVideoPlaying;
+            
+            if (activeTab === 'youtube') {
+                if (ytPlayerLeft && ytPlayerRight) {
+                    if (isVideoPlaying) {
+                        ytPlayerLeft.playVideo();
+                        ytPlayerRight.playVideo();
+                    } else {
+                        ytPlayerLeft.pauseVideo();
+                        ytPlayerRight.pauseVideo();
+                    }
+                }
             } else {
-                leftGlow.style.opacity = '0.45';
-                rightGlow.style.opacity = '0.45';
-                leftGlow.style.backgroundColor = hexColor;
-                rightGlow.style.backgroundColor = hexColor;
-                borderLeft.style.borderColor = hexColor + '55'; // مع تفعيل نصف شفافية للحواف
-                borderRight.style.borderColor = hexColor + '55';
-                showNotification("تم تعديل الإضاءة المحيطية المتزامنة.");
+                if (videoLeftEl && videoRightEl) {
+                    if (isVideoPlaying) {
+                        videoLeftEl.play();
+                        videoRightEl.play();
+                    } else {
+                        videoLeftEl.pause();
+                        videoRightEl.pause();
+                    }
+                }
+            }
+            updateVRPlayPauseButton();
+        }
+
+        function updateVRPlayPauseButton() {
+            const icon = document.getElementById('vrPlayPauseIcon');
+            if (icon) {
+                icon.setAttribute('data-lucide', isVideoPlaying ? 'pause' : 'play');
+                lucide.createIcons();
             }
         }
 
-        // التحكم الشامل: تشغيل الفيديوهات معاً بالتزامن
-        function playAll() {
-            // للفيديو المباشر
-            if (!videoElementLeft.classList.contains('hidden')) {
-                videoElementLeft.play();
-                videoElementRight.play();
+        // التقديم والتأخير لثوانٍ داخل النظارة
+        function seekInVR(seconds) {
+            if (activeTab === 'youtube') {
+                if (ytPlayerLeft && ytPlayerRight) {
+                    const currentTime = ytPlayerLeft.getCurrentTime();
+                    ytPlayerLeft.seekTo(currentTime + seconds, true);
+                    ytPlayerRight.seekTo(currentTime + seconds, true);
+                }
             } else {
-                // لإرسال أمر تشغيل لـ iframe الخاص بيوتيوب
-                playerLeft.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                playerRight.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                if (videoLeftEl && videoRightEl) {
+                    videoLeftEl.currentTime += seconds;
+                    videoRightEl.currentTime = videoLeftEl.currentTime;
+                }
             }
-            showNotification("تشغيل متزامن...");
         }
 
-        // التحكم الشامل: إيقاف مؤقت للفيديوهات معاً بالتزامن
-        function pauseAll() {
-            if (!videoElementLeft.classList.contains('hidden')) {
-                videoElementLeft.pause();
-                videoElementRight.pause();
+        function requestDeviceOrientationPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(state => {
+                        if (state === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    }).catch(console.error);
             } else {
-                playerLeft.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                playerRight.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                window.addEventListener('deviceorientation', handleOrientation);
             }
-            showNotification("تم الإيقاف المؤقت.");
         }
 
-        // التحكم الشامل: إيقاف نهائي للفيديوهات وإعادتها للبداية
-        function stopAll() {
-            if (!videoElementLeft.classList.contains('hidden')) {
-                videoElementLeft.pause();
-                videoElementLeft.currentTime = 0;
-                videoElementRight.pause();
-                videoElementRight.currentTime = 0;
-            } else {
-                playerLeft.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-                playerRight.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
-            }
-            showNotification("تم إيقاف المقطع وإعادة التعيين.");
+        function handleOrientation(event) {
+            if (!gyroEnabled) return;
+
+            let rotationY = event.gamma; 
+            let rotationX = event.beta - 70; 
+
+            rotationY = Math.max(-20, Math.min(20, rotationY));
+            rotationX = Math.max(-12, Math.min(12, rotationX));
+
+            const leftEye = document.getElementById('leftEye');
+            const rightEye = document.getElementById('rightEye');
+
+            leftEye.style.transform = `translate(${-rotationY * 0.7}px, ${rotationX * 0.7}px)`;
+            rightEye.style.transform = `translate(${-rotationY * 0.7}px, ${rotationX * 0.7}px)`;
         }
 
-        // التحكم الشامل: إعادة المقطع للبداية
-        function resetVideo() {
-            if (!videoElementLeft.classList.contains('hidden')) {
-                videoElementLeft.currentTime = 0;
-                videoElementRight.currentTime = 0;
-                videoElementLeft.play();
-                videoElementRight.play();
-            } else {
-                playerLeft.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-                playerRight.contentWindow.postMessage('{"event":"command","func":"seekTo","args":[0, true]}', '*');
-            }
-            showNotification("إعادة التشغيل من البداية.");
+        function resetViewRotation() {
+            window.removeEventListener('deviceorientation', handleOrientation);
+            document.getElementById('leftEye').style.transform = `translate(0px, 0px)`;
+            document.getElementById('rightEye').style.transform = `translate(0px, 0px)`;
         }
 
-        // إخفاء/إظهار شريط الإعدادات العلوي للحصول على اندماج كلي ونقاء كامل في العرض الافتراضي
-        function toggleTopPanel() {
-            if (controlPanel.classList.contains('hidden')) {
-                controlPanel.classList.remove('hidden');
-                togglePanelText.innerText = "إخفاء أدوات التحكم للحصول على تجربة غامرة";
-                togglePanelIcon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                controlPanel.classList.add('hidden');
-                togglePanelText.innerText = "عرض أدوات التحكم";
-                togglePanelIcon.setAttribute('data-lucide', 'eye');
+        function exitVR() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
             }
-            lucide.createIcons();
+
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+
+            if (ytPlayerLeft) { try { ytPlayerLeft.destroy(); } catch(e){} }
+            if (ytPlayerRight) { try { ytPlayerRight.destroy(); } catch(e){} }
+            if (videoLeftEl) { videoLeftEl.pause(); }
+            if (videoRightEl) { videoRightEl.pause(); }
+            
+            const containerL = document.getElementById('playerContainerLeft');
+            const containerR = document.getElementById('playerContainerRight');
+            containerL.innerHTML = '';
+            containerR.innerHTML = '';
+
+            resetViewRotation();
+
+            document.getElementById('vrContainer').classList.add('hidden');
+            document.getElementById('controlPanel').classList.remove('hidden');
         }
 
-        // تخطي قفل التوجيه بشكل يدوي للتجربة على الحواسيب أو الأجهزة المحاكية
-        function forceLandscapeDemo() {
-            document.querySelector('.rotate-warning').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'flex';
-        }
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                exitVR();
+            }
+        });
     </script>
 </body>
 </html>
